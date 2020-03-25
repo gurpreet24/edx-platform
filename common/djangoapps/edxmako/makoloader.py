@@ -37,11 +37,14 @@ class MakoLoader(object):
 
         self.module_directory = module_directory
 
-    def __call__(self, template_name, template_dirs=None):
-        return self.load_template(template_name, template_dirs)
+    def __call__(self, template_name):
+        return self.load_template(template_name)
 
-    def load_template(self, template_name, template_dirs=None):
-        source, file_path = self.load_template_source(template_name, template_dirs)
+    def get_template(self, name, skip=False):
+        return self.load_template(name)
+
+    def load_template(self, template_name):
+        source, file_path = self.load_template_source(template_name)
 
         # In order to allow dynamic template overrides, we need to cache templates based on their absolute paths
         # rather than relative paths, overriding templates would have same relative paths.
@@ -62,7 +65,7 @@ class MakoLoader(object):
             # This is a regular template
             try:
                 template = Engine.get_default().from_string(source)
-                return template, None
+                return template
             except ImproperlyConfigured:
                 # Either no DjangoTemplates engine was configured -or- multiple engines
                 # were configured, making the get_default() call above fail.
@@ -74,8 +77,8 @@ class MakoLoader(object):
                 # not exist.
                 return source, file_path
 
-    def load_template_source(self, template_name, template_dirs=None):
-        for origin in self.base_loader.get_template_sources(template_name, template_dirs):
+    def load_template_source(self, template_name):
+        for origin in self.base_loader.get_template_sources(template_name):
             try:
                 return self.base_loader.get_contents(origin), origin.name
             except TemplateDoesNotExist:

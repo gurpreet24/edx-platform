@@ -31,7 +31,7 @@ class TestSendVerificationExpiryEmail(MockS3BotoMixin, TestCase):
     def setUp(self):
         """ Initial set up for tests """
         super(TestSendVerificationExpiryEmail, self).setUp()
-        Site.objects.create(domain='edx.org', name='edx.org')
+        Site.objects.get_or_create(domain='edx.org', name='edx.org')
         self.resend_days = settings.VERIFICATION_EXPIRY_EMAIL['RESEND_DAYS']
         self.days = settings.VERIFICATION_EXPIRY_EMAIL['DAYS_RANGE']
         self.default_no_of_emails = settings.VERIFICATION_EXPIRY_EMAIL['DEFAULT_EMAILS']
