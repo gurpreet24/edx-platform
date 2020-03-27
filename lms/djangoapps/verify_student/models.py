@@ -9,7 +9,6 @@ of a student over a period of time. Right now, the only models are the abstract
 photo verification process as generic as possible.
 """
 
-
 import base64
 import codecs
 import functools
@@ -21,7 +20,6 @@ from datetime import timedelta
 from email.utils import formatdate
 
 import requests
-import simplejson
 import six
 from config_models.models import ConfigurationModel
 from django.conf import settings
@@ -46,7 +44,8 @@ from lms.djangoapps.verify_student.ssencrypt import (
 from openedx.core.djangoapps.signals.signals import LEARNER_NOW_VERIFIED
 from openedx.core.storage import get_storage
 
-from .utils import earliest_allowed_verification_date
+from .tasks import send_request_to_ss_for_user
+from .utils import auto_verify_for_testing_enabled, earliest_allowed_verification_date
 
 log = logging.getLogger(__name__)
 
@@ -447,6 +446,22 @@ class PhotoVerification(IDVerificationAttempt):
         message = u'LEARNER_NOW_VERIFIED signal fired for {user} from PhotoVerification'
         log.info(message.format(user=self.user.username))
 
+    def mark_submit(self):
+        """
+        This is a docstring
+        """
+        self.submitted_at = now()
+        self.status = "submitted"
+        self.save()
+
+    def mark_must_retry(self, error=""):
+        """
+        This is a docstring
+        """
+        self.status = "must_retry"
+        self.error_msg = error
+        self.save()
+
     @status_before_must_be("must_retry", "submitted", "approved", "denied")
     def deny(self,
              error_msg,
@@ -641,7 +656,7 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
         # developing and aren't interested in working on student identity
         # verification functionality. If you do want to work on it, you have to
         # explicitly enable these in your private settings.
-        if settings.FEATURES.get('AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING'):
+        if auto_verify_for_testing_enabled():
             return
 
         aes_key_str = settings.VERIFY_STUDENT["SOFTWARE_SECURE"]["FACE_IMAGE_AES_KEY"]
@@ -671,7 +686,7 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
         # developing and aren't interested in working on student identity
         # verification functionality. If you do want to work on it, you have to
         # explicitly enable these in your private settings.
-        if settings.FEATURES.get('AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING'):
+        if auto_verify_for_testing_enabled():
             # fake photo id key is set only for initial verification
             self.photo_id_key = 'fake-photo-id-key'
             self.save()
@@ -703,27 +718,33 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
 
         Keyword Arguments:
             copy_id_photo_from (SoftwareSecurePhotoVerification): If provided, re-send the ID photo
-                data from this attempt.  This is used for reverification, in which new face photos
+                data from this attempt.  This is used for re-verification, in which new face photos
                 are sent with previously-submitted ID photos.
-
         """
-        try:
-            response = self.send_request(copy_id_photo_from=copy_id_photo_from)
-            if response.ok:
-                self.submitted_at = now()
-                self.status = "submitted"
-                self.save()
-            else:
-                self.status = "must_retry"
-                self.error_msg = response.text
-                self.save()
-        except Exception:       # pylint: disable=broad-except
-            log.exception(
-                u'Software Secure submission failed for user %s, setting status to must_retry',
-                self.user.username
+        # Bypass posting anything to Software Secure if auto verify feature
+        # for testing is enabled. We actually don't even create the message because
+        # that would require encryption and message signing that rely on
+        # settings.VERIFY_STUDENT values that aren't set in dev. So we just
+        # pretend like we successfully posted.
+
+        if auto_verify_for_testing_enabled(False):
+            fake_response = requests.Response()
+            fake_response.status_code = 200
+            return fake_response
+
+        headers, body = self.create_request(copy_id_photo_from=copy_id_photo_from)
+
+        if copy_id_photo_from is not None:
+            log.info(
+                (
+                    'Software Secure attempt for user:%s and receipt ID: %s used the same photo ID data'
+                    ' as the receipt with ID %s.'
+                ),
+                self.user.username,
+                self.receipt_id,
+                copy_id_photo_from.receipt_id,
             )
-            self.status = "must_retry"
-            self.save()
+        send_request_to_ss_for_user.delay(user_verification=self, headers=headers, body=body)
 
     def parsed_error_msg(self):
         """
@@ -766,7 +787,7 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
                     parsed_errors.append(parsed_error)
                 else:
                     log.debug(u'Ignoring photo verification error message: %s', message)
-        except Exception:   # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             log.exception(u'Failed to parse error message for SoftwareSecurePhotoVerification %d', self.pk)
 
         return parsed_errors
@@ -910,55 +931,6 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
         body_txt = json.dumps(body, indent=2, sort_keys=True, ensure_ascii=False)
 
         return header_txt + "\n\n" + body_txt
-
-    def send_request(self, copy_id_photo_from=None):
-        """
-        Assembles a submission to Software Secure and sends it via HTTPS.
-
-        Keyword Arguments:
-            copy_id_photo_from (SoftwareSecurePhotoVerification): If provided, re-send the ID photo
-                data from this attempt.  This is used for reverification, in which new face photos
-                are sent with previously-submitted ID photos.
-
-        Returns:
-            request.Response
-
-        """
-        # If AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING is True, we want to
-        # skip posting anything to Software Secure. We actually don't even
-        # create the message because that would require encryption and message
-        # signing that rely on settings.VERIFY_STUDENT values that aren't set
-        # in dev. So we just pretend like we successfully posted
-        if settings.FEATURES.get('AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING'):
-            fake_response = requests.Response()
-            fake_response.status_code = 200
-            return fake_response
-
-        headers, body = self.create_request(copy_id_photo_from=copy_id_photo_from)
-
-        response = requests.post(
-            settings.VERIFY_STUDENT["SOFTWARE_SECURE"]["API_URL"],
-            headers=headers,
-            data=simplejson.dumps(body, indent=2, sort_keys=True, ensure_ascii=False).encode('utf-8'),
-            verify=False
-        )
-
-        log.info(u"Sent request to Software Secure for receipt ID %s.", self.receipt_id)
-        if copy_id_photo_from is not None:
-            log.info(
-                (
-                    u"Software Secure attempt with receipt ID %s used the same photo ID "
-                    u"data as the receipt with ID %s"
-                ),
-                self.receipt_id, copy_id_photo_from.receipt_id
-            )
-
-        log.debug("Headers:\n{}\n\n".format(headers))
-        log.debug("Body:\n{}\n\n".format(body))
-        log.debug(u"Return code: {}".format(response.status_code))
-        log.debug(u"Return message:\n\n{}\n\n".format(response.text))
-
-        return response
 
     def should_display_status_to_user(self):
         """Whether or not the status from this attempt should be displayed to the user."""

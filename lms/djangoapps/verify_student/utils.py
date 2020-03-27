@@ -101,3 +101,14 @@ def most_recent_verification(photo_id_verifications, sso_id_verifications, manua
     }
 
     return max(verifications_map, key=lambda k: verifications_map[k]) if verifications_map else None
+
+
+def auto_verify_for_testing_enabled(override=None):
+    """
+    If AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING is True, we want to skip posting
+    anything to Software Secure.
+    """
+    # TODO -- remove override logic befor merge.
+    if override is not None:
+        return override
+    return settings.FEATURES.get('AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING')
