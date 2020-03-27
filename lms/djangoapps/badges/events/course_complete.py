@@ -7,6 +7,9 @@ import hashlib
 import logging
 
 import six
+
+from django.contrib.auth.models import User
+from django.http import Http404
 from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
@@ -14,6 +17,8 @@ from django.utils.translation import ugettext_lazy as _
 from badges.models import BadgeAssertion, BadgeClass, CourseCompleteImageConfiguration
 from badges.utils import requires_badges_enabled, site_prefix
 from xmodule.modulestore.django import modulestore
+
+from lms.djangoapps.certificates.models import GeneratedCertificate
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,9 +67,15 @@ def evidence_url(user_id, course_key):
     Generates a URL to the user's Certificate HTML view, along with a GET variable that will signal the evidence visit
     event.
     """
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        raise Http404
+    user = User.objects.get(id=user_id)
     course_id = six.text_type(course_key)
+    cert = GeneratedCertificate.eligible_certificates.get(user__username=user.username, course_id=course_id)
     return site_prefix() + reverse(
-        'certificates:html_view', kwargs={'user_id': user_id, 'course_id': course_id}) + '?evidence_visit=1'
+        'certificates:render_cert_by_uuid', kwargs={'certificate_uuid': cert.verify_uuid}) + '?evidence_visit=1'
 
 
 def criteria(course_key):
