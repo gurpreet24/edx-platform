@@ -285,7 +285,7 @@ FEATURES = {
     'MILESTONES_APP': False,
 
     # Organizations application flag
-    'ORGANIZATIONS_APP': False,
+    'ORGANIZATIONS_APP': True,
 
     # Prerequisite courses feature flag
     'ENABLE_PREREQUISITE_COURSES': False,
@@ -478,6 +478,7 @@ FEATURES = {
     # .. toggle_status: supported
     # .. toggle_warnings: None
     'ENABLE_ORA_USER_STATE_UPLOAD_DATA': False,
+    'USE_MICROSITES': True
 }
 
 # Settings for the course reviews tool template and identification key, set either to None to disable course reviews
@@ -3883,7 +3884,27 @@ LEARNER_PORTAL_URL_ROOT = 'http://localhost:8734'
 
 ######################### MICROSITE ###############################
 MICROSITE_ROOT_DIR = '/edx/app/edxapp/edx-microsite'
-MICROSITE_CONFIGURATION = {}
+MICROSITE_CONFIGURATION = {
+"calyxpod": { 
+      "domain_prefix": "calyxpod", 
+      "university": "calyxpod", 
+      "platform_name": "Foo Professional Education Online X Programs", 
+      "logo_image_url":  "foo/images/header-logo.png", 
+      "ENABLE_MKTG_SITE":  false, 
+      "SITE_NAME": "calyxpod.localhost", 
+      "course_org_filter": "FooX",  
+      "show_partners":  false, 
+      "show_homepage_promo_video": false, 
+      "course_index_overlay_text": "Explore Foo courses from leading universities", 
+      "homepage_overlay_html":  "<h1>The Footure of Online Education</h1>", 
+      "favicon_path": "foo/images/header-logo.png", 
+      "ENABLE_THIRD_PARTY_AUTH": false, 
+      "ALLOW_AUTOMATED_SIGNUPS": true, 
+      "ALWAYS_REDIRECT_HOMEPAGE_TO_DASHBOARD_FOR_AUTHENTICATED_USER": false, 
+      "course_email_from_addr": "foo@edx.com", 
+      "SESSION_COOKIE_DOMAIN": "calyxpod.localhost"
+  }
+}
 
 SYSLOG_SERVER = ''
 FEEDBACK_SUBMISSION_EMAIL = ''
