@@ -591,8 +591,8 @@ def _make_mako_template_dirs(settings):
         for theme in get_themes_unchecked(themes_dirs, settings.PROJECT_ROOT):
             if theme.themes_base_dir not in settings.MAKO_TEMPLATE_DIRS_BASE:
                 settings.MAKO_TEMPLATE_DIRS_BASE.insert(0, theme.themes_base_dir)
-    if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
-        settings.MAKO_TEMPLATE_DIRS_BASE.insert(0, settings.MICROSITE_ROOT_DIR)
+    # if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
+    #     settings.MAKO_TEMPLATE_DIRS_BASE.insert(0, settings.MICROSITE_ROOT_DIR)
     return settings.MAKO_TEMPLATE_DIRS_BASE
 
 
@@ -683,8 +683,8 @@ def _add_microsite_dirs_to_default_template_engine(settings):
     """
     Derives the final DEFAULT_TEMPLATE_ENGINE['DIRS'] setting from other settings.
     """
-    if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
-        DEFAULT_TEMPLATE_ENGINE_DIRS.append(settings.MICROSITE_ROOT_DIR)
+    # if settings.FEATURES.get('USE_MICROSITES', False) and getattr(settings, "MICROSITE_CONFIGURATION", False):
+    #     DEFAULT_TEMPLATE_ENGINE_DIRS.append(settings.MICROSITE_ROOT_DIR)
     return DEFAULT_TEMPLATE_ENGINE_DIRS
 
 
