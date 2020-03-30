@@ -408,6 +408,30 @@ FEATURES = {
     'ENABLE_ACCOUNT_DELETION': True,
 }
 
+MICROSITE_CONFIGURATION = {
+    "calyxpod": {
+        "domain_prefix": "calyxpod",
+        "university": "calyxpod",
+        "platform_name": "Foo Professional Education Online X Programs",
+        "logo_image_url":  "foo/images/header-logo.png",
+        "ENABLE_MKTG_SITE":  False,
+        "SITE_NAME": "calyxpod.localhost",
+        "course_org_filter": "FooX",
+        "show_partners":  False,
+        "show_homepage_promo_video": False,
+        "course_index_overlay_text": "Explore Foo courses from leading universities",
+        "homepage_overlay_html":  "<h1>The Footure of Online Education</h1>",
+        "favicon_path": "foo/images/header-logo.png",
+        "ENABLE_THIRD_PARTY_AUTH": False,
+        "ALLOW_AUTOMATED_SIGNUPS": True,
+        "ALWAYS_REDIRECT_HOMEPAGE_TO_DASHBOARD_FOR_AUTHENTICATED_USER": False,
+        "course_email_from_addr": "foo@edx.com",
+        "SESSION_COOKIE_DOMAIN": "calyxpod.localhost"
+    }
+}
+
+MICROSITE_ROOT_DIR ="/edx/app/edxapp/edx-microsite"
+
 # Settings for the course reviews tool template and identification key, set either to None to disable course reviews
 COURSE_REVIEWS_TOOL_PROVIDER_FRAGMENT_NAME = 'coursetalk-reviews-fragment.html'
 COURSE_REVIEWS_TOOL_PROVIDER_PLATFORM_KEY = 'edx'
@@ -3465,28 +3489,6 @@ RETIREMENT_STATES = [
     'COMPLETE',
 ]
 
-
-MICROSITE_CONFIGURATION = {
-    "calyxpod": {
-        "domain_prefix": "calyxpod",
-        "university": "calyxpod",
-        "platform_name": "Foo Professional Education Online X Programs",
-        "logo_image_url":  "foo/images/header-logo.png",
-        "ENABLE_MKTG_SITE":  False,
-        "SITE_NAME": "calyxpod.localhost",
-        "course_org_filter": "FooX",
-        "show_partners":  False,
-        "show_homepage_promo_video": False,
-        "course_index_overlay_text": "Explore Foo courses from leading universities",
-        "homepage_overlay_html":  "<h1>The Footure of Online Education</h1>",
-        "favicon_path": "foo/images/header-logo.png",
-        "ENABLE_THIRD_PARTY_AUTH": False,
-        "ALLOW_AUTOMATED_SIGNUPS": True,
-        "ALWAYS_REDIRECT_HOMEPAGE_TO_DASHBOARD_FOR_AUTHENTICATED_USER": False,
-        "course_email_from_addr": "foo@edx.com",
-        "SESSION_COOKIE_DOMAIN": "calyxpod.localhost"
-    }
-}
 
 ############## Settings for Writable Gradebook  #########################
 # If running a Gradebook container locally,
