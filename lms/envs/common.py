@@ -242,7 +242,7 @@ FEATURES = {
     'ALLOW_WIKI_ROOT_ACCESS': True,
 
     # Turn on/off Microsites feature
-    'USE_MICROSITES': False,
+    'USE_MICROSITES': True,
 
     # Turn on third-party auth. Disabled for now because full implementations are not yet available. Remember to run
     # migrations if you enable this; we don't create tables by default.
@@ -3464,6 +3464,29 @@ RETIREMENT_STATES = [
     'ABORTED',
     'COMPLETE',
 ]
+
+
+MICROSITE_CONFIGURATION = {
+    "calyxpod": {
+        "domain_prefix": "calyxpod",
+        "university": "calyxpod",
+        "platform_name": "Foo Professional Education Online X Programs",
+        "logo_image_url":  "foo/images/header-logo.png",
+        "ENABLE_MKTG_SITE":  False,
+        "SITE_NAME": "calyxpod.localhost",
+        "course_org_filter": "FooX",
+        "show_partners":  False,
+        "show_homepage_promo_video": False,
+        "course_index_overlay_text": "Explore Foo courses from leading universities",
+        "homepage_overlay_html":  "<h1>The Footure of Online Education</h1>",
+        "favicon_path": "foo/images/header-logo.png",
+        "ENABLE_THIRD_PARTY_AUTH": False,
+        "ALLOW_AUTOMATED_SIGNUPS": True,
+        "ALWAYS_REDIRECT_HOMEPAGE_TO_DASHBOARD_FOR_AUTHENTICATED_USER": False,
+        "course_email_from_addr": "foo@edx.com",
+        "SESSION_COOKIE_DOMAIN": "calyxpod.localhost"
+    }
+}
 
 ############## Settings for Writable Gradebook  #########################
 # If running a Gradebook container locally,
